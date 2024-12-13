@@ -1,0 +1,21 @@
+exvalua\_doc\_gen package
+=========================
+
+Submodules
+----------
+
+exvalua\_doc\_gen.exvalua\_doc\_gen module
+------------------------------------------
+
+.. automodule:: exvalua_doc_gen.exvalua_doc_gen
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: exvalua_doc_gen
+   :members:
+   :undoc-members:
+   :show-inheritance:

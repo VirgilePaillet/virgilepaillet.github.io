@@ -1,0 +1,94 @@
+Usage
+=====
+
+Quickstart
+------------
+
+To use Exvalua Doc Gen, you simply need to execute the .exe file and then:
+
+..
+
+- Input your Word template document.
+- Input your risk visit Excel file.
+- Input your Excel form.
+- Select the output path for the generated Word document.
+- Select a translation language.
+
+..
+
+You're good to go!
+
+..
+
+Using Python
+------------
+If you'd like to use Python for Exvalua Doc Gen, first install it using ``pip``:
+
+.. code-block:: console
+
+    (.venv) $ pip install exvalua_doc_gen
+
+..
+
+Excel Form
+----------
+
+In order for the generation to work properly, this Excel form file is required:
+..
+
+.. csv-table:: Excel form :rst:dir:`form_exvalua`
+    :header: "Champ", "Valeur du champ", "Valeur de la variable", "Exemple"
+
+    "Nom client","","Ne pas spécifier ","CASTEL "
+    "Nom risque","","Ne pas spécifier ","SABC GAROUA "
+    "Pays risque","","Ne pas spécifier ","CAMEROUN "
+    "Ville risque","","Ne pas spécifier ","GAROUA "
+    "Adresse risque","","Ne pas spécifier ","BP 4036 Garoua "
+    "Région risque","","Ne pas spécifier "," "
+    "GPS risque","","Ne pas spécifier ","9.3014° N, 13.3956° E "
+    "Noms visiteurs","","0 ","IYADJOBO Ismaïla "
+    "Fonctions visiteurs","","0 "," "
+    "Raison sociale","","Ne pas spécifier ","CCBL FUNDA "
+    "Année actuelle","","Ne pas spécifier ","2024 "
+    "Mois actual","","Ne pas spécifier ","Novembre "
+    "Dates visites","","0 ","16/10/2024 "
+    "Date mise en exploitation","","Ne pas spécifier "," "
+    "Usines avoisinantes","","0 "," "
+    "Activité","","Ne pas spécifier ","Brasserie "
+    "Secteur d'activité","","Ne pas spécifier ","la brasserie "
+    "Fréquence","","Ne pas spécifier ","3 "
+    "Gravité","","Ne pas spécifier ","2 "
+    "Niveau de maîtrise","","Ne pas spécifier ","Faible "
+    "Evaluation risques","","Ne pas spécifier "," "
+
+..
+
+The **Valeur du champ** and **Valeur de la variable** are the only columns needing to be filled.
+
+..
+
+If multiple **Valeur du champ** are required, for instance if there are **two** "Noms visiteur", just input 2 in the **Valeur de la variale** column.
+Once every field has been filled out, press the **Insérer les lignes variables** button and fill out the rest.
+
+..
+
+Word template
+-------------
+
+A **Word template** document is needed in order for the app to work. This Word template is based on previous risk visit reports. It contains all of the recurring information (tables, titles, legal information...) and replaces variable information with a placeholder.
+
+For instance, the risk name changes from one report to another. The code will fetch the new name from the Excel form and replace the placeholder with it.
+
+..
+
+Translation
+-----------
+
+The code implements a **Google Translate** translation module. It first generates the French report and then translates every paragraph using **Google Translate**.
+
+..
+
+Risk visit Excel table generation
+---------------------------------
+
+The code implements a **table generation** module. It parses the **risk visit Excel file**, generates a **Word formatted table** and places it in the **Word template**.

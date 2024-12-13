@@ -1,0 +1,793 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>exvalua_doc_gen.exvalua_doc_gen &mdash; Exvalua DocGen Documentation 1.0.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css" />
+
+  
+      <script src="../../_static/jquery.js"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+      <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+      <script src="../../_static/doctools.js"></script>
+      <script src="../../_static/sphinx_highlight.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            Exvalua DocGen Documentation
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../modules.html">src</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../usage.html">Usage</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Exvalua DocGen Documentation</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">exvalua_doc_gen.exvalua_doc_gen</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for exvalua_doc_gen.exvalua_doc_gen</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">io</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">openpyxl</span>
+<span class="kn">from</span> <span class="nn">docx</span> <span class="kn">import</span> <span class="n">Document</span>
+<span class="kn">from</span> <span class="nn">deep_translator</span> <span class="kn">import</span> <span class="n">GoogleTranslator</span>
+<span class="kn">from</span> <span class="nn">tqdm</span> <span class="kn">import</span> <span class="n">tqdm</span>
+<span class="kn">from</span> <span class="nn">docx.oxml</span> <span class="kn">import</span> <span class="n">OxmlElement</span>
+<span class="kn">from</span> <span class="nn">docx.shared</span> <span class="kn">import</span> <span class="n">Inches</span><span class="p">,</span> <span class="n">Pt</span>
+<span class="kn">from</span> <span class="nn">docx.oxml</span> <span class="kn">import</span> <span class="n">parse_xml</span>
+<span class="kn">from</span> <span class="nn">docx.oxml.ns</span> <span class="kn">import</span> <span class="n">nsdecls</span><span class="p">,</span> <span class="n">qn</span>
+<span class="kn">from</span> <span class="nn">docx.enum.table</span> <span class="kn">import</span> <span class="n">WD_ALIGN_VERTICAL</span>
+<span class="kn">from</span> <span class="nn">docx.enum.text</span> <span class="kn">import</span> <span class="n">WD_ALIGN_PARAGRAPH</span>
+<span class="kn">from</span> <span class="nn">openpyxl_image_loader</span> <span class="kn">import</span> <span class="n">SheetImageLoader</span>
+<span class="kn">from</span> <span class="nn">docxtpl</span> <span class="kn">import</span> <span class="n">DocxTemplate</span>
+<span class="kn">from</span> <span class="nn">python_docx_replace</span> <span class="kn">import</span> <span class="n">docx_replace</span>
+<span class="kn">from</span> <span class="nn">gooey</span> <span class="kn">import</span> <span class="n">Gooey</span><span class="p">,</span> <span class="n">GooeyParser</span>
+<span class="kn">import</span> <span class="nn">copy</span>
+<span class="kn">from</span> <span class="nn">docx.enum.text</span> <span class="kn">import</span> <span class="n">WD_PARAGRAPH_ALIGNMENT</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+
+<div class="viewcode-block" id="DocumentTranslation"><a class="viewcode-back" href="../../exvalua_doc_gen.html#exvalua_doc_gen.exvalua_doc_gen.DocumentTranslation">[docs]</a><span class="k">class</span> <span class="nc">DocumentTranslation</span><span class="p">:</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">doc</span><span class="p">:</span> <span class="n">Document</span><span class="p">,</span> <span class="n">source_lang</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">dest_lang</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initializes the DocumentTranslation class with a document and language specifications.</span>
+
+<span class="sd">        :param doc: The document to be translated.</span>
+<span class="sd">        :type doc: Document</span>
+<span class="sd">        :param source_lang: The source language code (e.g., &#39;fr&#39; for French).</span>
+<span class="sd">        :type source_lang: str</span>
+<span class="sd">        :param dest_lang: The target language code (e.g., &#39;pt&#39; for Portuguese).</span>
+<span class="sd">        :type dest_lang: str</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_doc</span> <span class="o">=</span> <span class="n">doc</span>  <span class="c1"># Store the Document object</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_source_lang</span> <span class="o">=</span> <span class="n">source_lang</span>  <span class="c1"># Store the source language code</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_dest_lang</span> <span class="o">=</span> <span class="n">dest_lang</span>  <span class="c1"># Store the target language code</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">doc</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Document</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Gets the document to be translated.</span>
+
+<span class="sd">        :return: The document to be translated.</span>
+<span class="sd">        :rtype: Document</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_doc</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">source_lang</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Gets the source language code.</span>
+
+<span class="sd">        :return: The source language code.</span>
+<span class="sd">        :rtype: str</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_source_lang</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">dest_lang</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Gets the target language code.</span>
+
+<span class="sd">        :return: The target language code.</span>
+<span class="sd">        :rtype: str</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dest_lang</span>
+
+<div class="viewcode-block" id="DocumentTranslation.traduction_google"><a class="viewcode-back" href="../../exvalua_doc_gen.html#exvalua_doc_gen.exvalua_doc_gen.DocumentTranslation.traduction_google">[docs]</a>    <span class="k">def</span> <span class="nf">traduction_google</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">texte</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Translates text using Google Translator.</span>
+
+<span class="sd">        :param texte: The text to be translated.</span>
+<span class="sd">        :type texte: str</span>
+<span class="sd">        :return: The translated text.</span>
+<span class="sd">        :rtype: str</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">GoogleTranslator</span><span class="p">(</span><span class="n">source</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">source_lang</span><span class="p">,</span> <span class="n">target</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">dest_lang</span><span class="p">)</span><span class="o">.</span><span class="n">translate</span><span class="p">(</span><span class="n">texte</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="DocumentTranslation.match_capitalized"><a class="viewcode-back" href="../../exvalua_doc_gen.html#exvalua_doc_gen.exvalua_doc_gen.DocumentTranslation.match_capitalized">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">match_capitalized</span><span class="p">(</span><span class="n">phrase_1</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">phrase_2</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Matches capitalized words in the translated phrase to the original phrase.</span>
+
+<span class="sd">        :param phrase_1: The original phrase.</span>
+<span class="sd">        :type phrase_1: str</span>
+<span class="sd">        :param phrase_2: The translated phrase.</span>
+<span class="sd">        :type phrase_2: str</span>
+<span class="sd">        :return: The translated phrase with capitalized words matched.</span>
+<span class="sd">        :rtype: str</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">set_all_upper</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>  <span class="c1"># Set to hold words that should be capitalized</span>
+        <span class="k">for</span> <span class="n">word</span> <span class="ow">in</span> <span class="n">phrase_1</span><span class="o">.</span><span class="n">split</span><span class="p">():</span>
+            <span class="n">upper_counter</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="mi">1</span> <span class="k">for</span> <span class="n">char</span> <span class="ow">in</span> <span class="n">word</span> <span class="k">if</span> <span class="n">char</span><span class="o">.</span><span class="n">isupper</span><span class="p">())</span>  <span class="c1"># Count uppercase letters in the word</span>
+
+            <span class="k">if</span> <span class="p">(</span><span class="n">upper_counter</span> <span class="o">&gt;</span> <span class="mi">2</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">word</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">2</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="n">upper_counter</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">word</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">3</span><span class="p">):</span>
+                <span class="n">set_all_upper</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">word</span><span class="p">)</span>  <span class="c1"># Add the word to the set if it meets the conditions</span>
+
+        <span class="n">words</span> <span class="o">=</span> <span class="n">phrase_2</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">word</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">words</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">word</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span> <span class="ow">in</span> <span class="n">set_all_upper</span><span class="p">:</span>  <span class="c1"># Check if the word should be capitalized</span>
+                <span class="n">words</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">word</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>  <span class="c1"># Capitalize the word</span>
+        <span class="n">phrase_2</span> <span class="o">=</span> <span class="s1">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">words</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">phrase_2</span></div>
+
+<div class="viewcode-block" id="DocumentTranslation.traduction_report"><a class="viewcode-back" href="../../exvalua_doc_gen.html#exvalua_doc_gen.exvalua_doc_gen.DocumentTranslation.traduction_report">[docs]</a>    <span class="k">def</span> <span class="nf">traduction_report</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">output_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">save</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Document</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Translates the content of the document and saves it to the specified output path.</span>
+
+<span class="sd">        :param output_path: The file path where the translated document will be saved.</span>
+<span class="sd">        :type output_path: str</span>
+<span class="sd">        :param save: True if user wishes to save translated document to output_path.</span>
+<span class="sd">        :type save: bool</span>
+<span class="sd">        :return: The translated document.</span>
+<span class="sd">        :rtype: Document</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">paragraphs</span> <span class="o">=</span> <span class="p">[</span><span class="n">paragraph</span> <span class="k">for</span> <span class="n">paragraph</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">doc</span><span class="o">.</span><span class="n">paragraphs</span> <span class="k">if</span>
+                      <span class="nb">len</span><span class="p">(</span><span class="n">paragraph</span><span class="o">.</span><span class="n">text</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">]</span>  <span class="c1"># Get non-empty paragraphs</span>
+        <span class="k">for</span> <span class="n">paragraph</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="n">paragraphs</span><span class="p">):</span>  <span class="c1"># Iterate over each paragraph</span>
+            <span class="n">runs</span> <span class="o">=</span> <span class="n">paragraph</span><span class="o">.</span><span class="n">runs</span>
+            <span class="k">for</span> <span class="n">run</span> <span class="ow">in</span> <span class="n">runs</span><span class="p">:</span>  <span class="c1"># Iterate over each run</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">run</span><span class="o">.</span><span class="n">text</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">2</span> <span class="ow">and</span> <span class="n">run</span><span class="o">.</span><span class="n">text</span> <span class="o">!=</span> <span class="s1">&#39; &#39;</span><span class="p">:</span>  <span class="c1"># Check if the run has meaningful text</span>
+                    <span class="n">old_text</span> <span class="o">=</span> <span class="n">run</span><span class="o">.</span><span class="n">text</span>
+                    <span class="n">new_text</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">traduction_google</span><span class="p">(</span><span class="n">old_text</span><span class="p">)</span>  <span class="c1"># Translate the text</span>
+                    <span class="k">if</span> <span class="n">new_text</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># If translation fails, skip</span>
+                        <span class="k">continue</span>
+                    <span class="n">new_text</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">match_capitalized</span><span class="p">(</span><span class="n">old_text</span><span class="p">,</span> <span class="n">new_text</span><span class="p">)</span>  <span class="c1"># Match capitalization</span>
+                    <span class="n">run</span><span class="o">.</span><span class="n">text</span> <span class="o">=</span> <span class="n">run</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">old_text</span><span class="p">,</span> <span class="n">new_text</span><span class="p">)</span>  <span class="c1"># Replace the old text with the new text</span>
+
+        <span class="k">for</span> <span class="n">table</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">doc</span><span class="o">.</span><span class="n">tables</span><span class="p">):</span>  <span class="c1"># Iterate over each table in the document</span>
+            <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">table</span><span class="o">.</span><span class="n">rows</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">cell</span> <span class="ow">in</span> <span class="n">row</span><span class="o">.</span><span class="n">cells</span><span class="p">:</span>
+                    <span class="n">paragraphs</span> <span class="o">=</span> <span class="p">[</span><span class="n">paragraph</span> <span class="k">for</span> <span class="n">paragraph</span> <span class="ow">in</span> <span class="n">cell</span><span class="o">.</span><span class="n">paragraphs</span> <span class="k">if</span>
+                                  <span class="nb">len</span><span class="p">(</span><span class="n">paragraph</span><span class="o">.</span><span class="n">text</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">]</span>  <span class="c1"># Get non-empty paragraphs in cell</span>
+                    <span class="k">for</span> <span class="n">paragraph</span> <span class="ow">in</span> <span class="n">paragraphs</span><span class="p">:</span>  <span class="c1"># Iterate over each paragraph in the cell</span>
+                        <span class="n">runs</span> <span class="o">=</span> <span class="n">paragraph</span><span class="o">.</span><span class="n">runs</span>
+                        <span class="k">for</span> <span class="n">run</span> <span class="ow">in</span> <span class="n">runs</span><span class="p">:</span>  <span class="c1"># Iterate over each run</span>
+                            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">run</span><span class="o">.</span><span class="n">text</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">2</span> <span class="ow">and</span> <span class="n">run</span><span class="o">.</span><span class="n">text</span> <span class="o">!=</span> <span class="s1">&#39; &#39;</span><span class="p">:</span>  <span class="c1"># Check if the run has meaningful text</span>
+                                <span class="n">old_text</span> <span class="o">=</span> <span class="n">run</span><span class="o">.</span><span class="n">text</span>  <span class="c1"># Store the original text</span>
+                                <span class="n">new_text</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">traduction_google</span><span class="p">(</span><span class="n">old_text</span><span class="p">)</span>  <span class="c1"># Translate the text</span>
+                                <span class="k">if</span> <span class="n">new_text</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># If translation fails, skip</span>
+                                    <span class="k">continue</span>
+                                <span class="n">new_text</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">match_capitalized</span><span class="p">(</span><span class="n">old_text</span><span class="p">,</span> <span class="n">new_text</span><span class="p">)</span>  <span class="c1"># Match capitalization</span>
+                                <span class="n">run</span><span class="o">.</span><span class="n">text</span> <span class="o">=</span> <span class="n">run</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">old_text</span><span class="p">,</span>
+                                                            <span class="n">new_text</span><span class="p">)</span>  <span class="c1"># Replace the old text with the new text</span>
+
+        <span class="k">if</span> <span class="n">save</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">doc</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">output_path</span><span class="p">)</span>  <span class="c1"># Save the translated document</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">doc</span></div></div>
+
+
+<div class="viewcode-block" id="TableGeneration"><a class="viewcode-back" href="../../exvalua_doc_gen.html#exvalua_doc_gen.exvalua_doc_gen.TableGeneration">[docs]</a><span class="k">class</span> <span class="nc">TableGeneration</span><span class="p">:</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">xlsx_file_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initializes the TableGeneration class with the path to an Excel file.</span>
+
+<span class="sd">        :param xlsx_file_path: The path to the Excel file.</span>
+<span class="sd">        :type xlsx_file_path: str</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_xlsx_file_path</span> <span class="o">=</span> <span class="n">xlsx_file_path</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">xlsx_file_path</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Gets the path to the Excel file.</span>
+
+<span class="sd">        :return: The path to the Excel file.</span>
+<span class="sd">        :rtype: str</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_xlsx_file_path</span>
+
+    <span class="nd">@xlsx_file_path</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">xlsx_file_path</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Sets the path to the Excel file.</span>
+
+<span class="sd">        :param value: The new path to the Excel file.</span>
+<span class="sd">        :type value: str</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_xlsx_file_path</span> <span class="o">=</span> <span class="n">value</span>
+
+<div class="viewcode-block" id="TableGeneration.save_images"><a class="viewcode-back" href="../../exvalua_doc_gen.html#exvalua_doc_gen.exvalua_doc_gen.TableGeneration.save_images">[docs]</a>    <span class="k">def</span> <span class="nf">save_images</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Parses an Excel file and saves all of its images in a separate folder.</span>
+
+<span class="sd">        :return: A list of references for saved images.</span>
+<span class="sd">        :rtype: list[str]</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">in_mem_file</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">xlsx_file_path</span><span class="p">,</span> <span class="s2">&quot;rb&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">in_mem_file</span> <span class="o">=</span> <span class="n">io</span><span class="o">.</span><span class="n">BytesIO</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">())</span>
+        <span class="n">pxl_doc</span> <span class="o">=</span> <span class="n">openpyxl</span><span class="o">.</span><span class="n">load_workbook</span><span class="p">(</span><span class="n">in_mem_file</span><span class="p">)</span>
+        <span class="n">excel_filename</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">xlsx_file_path</span><span class="p">)</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;data</span><span class="se">\\</span><span class="s1">images</span><span class="se">\\</span><span class="si">{</span><span class="n">excel_filename</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">sheet</span> <span class="o">=</span> <span class="n">pxl_doc</span><span class="p">[</span><span class="n">pxl_doc</span><span class="o">.</span><span class="n">sheetnames</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
+        <span class="n">image_loader</span> <span class="o">=</span> <span class="n">SheetImageLoader</span><span class="p">(</span><span class="n">sheet</span><span class="p">)</span>
+        <span class="n">cell_dic</span> <span class="o">=</span> <span class="p">{</span><span class="n">i</span><span class="p">:</span> <span class="sa">f</span><span class="s1">&#39;I</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s1">&#39;</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">sheet</span><span class="o">.</span><span class="n">max_row</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)}</span>
+        <span class="n">ref_list</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">row</span><span class="p">,</span> <span class="n">cell</span> <span class="ow">in</span> <span class="n">cell_dic</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">image_loader</span><span class="o">.</span><span class="n">image_in</span><span class="p">(</span><span class="n">cell</span><span class="p">):</span>
+                <span class="n">image</span> <span class="o">=</span> <span class="n">image_loader</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">cell</span><span class="p">)</span>
+                <span class="n">ref</span> <span class="o">=</span> <span class="n">sheet</span><span class="p">[</span><span class="sa">f</span><span class="s1">&#39;A</span><span class="si">{</span><span class="n">row</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">value</span>
+                <span class="n">ref_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ref</span><span class="p">)</span>
+                <span class="n">image</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;data</span><span class="se">\\</span><span class="s1">images</span><span class="se">\\</span><span class="si">{</span><span class="n">excel_filename</span><span class="si">}</span><span class="se">\\</span><span class="si">{</span><span class="n">ref</span><span class="si">}</span><span class="s1">.png&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">ref_list</span></div>
+
+<div class="viewcode-block" id="TableGeneration.format_df_report"><a class="viewcode-back" href="../../exvalua_doc_gen.html#exvalua_doc_gen.exvalua_doc_gen.TableGeneration.format_df_report">[docs]</a>    <span class="k">def</span> <span class="nf">format_df_report</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Reads an Excel file, formats it, and returns a pandas DataFrame.</span>
+
+<span class="sd">        :return: The formatted DataFrame.</span>
+<span class="sd">        :rtype: pd.DataFrame</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_excel</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">xlsx_file_path</span><span class="p">,</span> <span class="n">index_col</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">usecols</span><span class="o">=</span><span class="p">[</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">9</span><span class="p">)])</span>
+        <span class="n">ref_list</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">save_images</span><span class="p">()</span>
+        <span class="n">excel_filename</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">xlsx_file_path</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">ref</span> <span class="ow">in</span> <span class="n">ref_list</span><span class="p">:</span>
+            <span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">ref</span><span class="p">,</span> <span class="s1">&#39;Illustration &#39;</span><span class="p">]</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;data</span><span class="se">\\</span><span class="s1">images</span><span class="se">\\</span><span class="si">{</span><span class="n">excel_filename</span><span class="si">}</span><span class="se">\\</span><span class="si">{</span><span class="n">ref</span><span class="si">}</span><span class="s1">.png&#39;</span>
+        <span class="n">formatted_df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;Valeur&#39;</span><span class="p">,</span> <span class="s1">&#39;Criticité&#39;</span><span class="p">,</span> <span class="s1">&#39;Catégorie &#39;</span><span class="p">])</span><span class="o">.</span><span class="n">dropna</span><span class="p">(</span><span class="n">how</span><span class="o">=</span><span class="s1">&#39;all&#39;</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">formatted_df</span><span class="o">.</span><span class="n">reset_index</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="TableGeneration.move_table_after"><a class="viewcode-back" href="../../exvalua_doc_gen.html#exvalua_doc_gen.exvalua_doc_gen.TableGeneration.move_table_after">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">move_table_after</span><span class="p">(</span><span class="n">table</span><span class="p">,</span> <span class="n">paragraph</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Moves a table to follow a specified paragraph.</span>
+
+<span class="sd">        :param table: The table to be moved.</span>
+<span class="sd">        :param paragraph: The paragraph after which the table should be placed.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">tbl</span><span class="p">,</span> <span class="n">p</span> <span class="o">=</span> <span class="n">table</span><span class="o">.</span><span class="n">_tbl</span><span class="p">,</span> <span class="n">paragraph</span><span class="o">.</span><span class="n">_p</span>
+        <span class="n">p</span><span class="o">.</span><span class="n">addnext</span><span class="p">(</span><span class="n">tbl</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="TableGeneration.find_paragraph_precede_rectable"><a class="viewcode-back" href="../../exvalua_doc_gen.html#exvalua_doc_gen.exvalua_doc_gen.TableGeneration.find_paragraph_precede_rectable">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">find_paragraph_precede_rectable</span><span class="p">(</span><span class="n">doc</span><span class="p">:</span> <span class="n">Document</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Finds the paragraph that precedes the specified rectangle table.</span>
+
+<span class="sd">        :param doc: The document to search in.</span>
+<span class="sd">        :type doc: Document</span>
+<span class="sd">        :return: The found paragraph or a message indicating it was not found.</span>
+<span class="sd">        :rtype: str</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">paragraph</span> <span class="ow">in</span> <span class="n">doc</span><span class="o">.</span><span class="n">paragraphs</span><span class="p">:</span>
+            <span class="k">if</span> <span class="s1">&#39;Moyen terme&#39;</span> <span class="ow">in</span> <span class="n">paragraph</span><span class="o">.</span><span class="n">text</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">paragraph</span>
+        <span class="k">return</span> <span class="s1">&#39;Paragraph not found&#39;</span></div>
+
+<div class="viewcode-block" id="TableGeneration.set_repeat_table_header"><a class="viewcode-back" href="../../exvalua_doc_gen.html#exvalua_doc_gen.exvalua_doc_gen.TableGeneration.set_repeat_table_header">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">set_repeat_table_header</span><span class="p">(</span><span class="n">row</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Sets the repeat table row on every new page.</span>
+
+<span class="sd">        :param row: The table row to repeat.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">tr</span> <span class="o">=</span> <span class="n">row</span><span class="o">.</span><span class="n">_tr</span>
+        <span class="n">trPr</span> <span class="o">=</span> <span class="n">tr</span><span class="o">.</span><span class="n">get_or_add_trPr</span><span class="p">()</span>
+        <span class="n">tblHeader</span> <span class="o">=</span> <span class="n">OxmlElement</span><span class="p">(</span><span class="s1">&#39;w:tblHeader&#39;</span><span class="p">)</span>
+        <span class="n">tblHeader</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">qn</span><span class="p">(</span><span class="s1">&#39;w:val&#39;</span><span class="p">),</span> <span class="s2">&quot;true&quot;</span><span class="p">)</span>
+        <span class="n">trPr</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">tblHeader</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="TableGeneration.prevent_document_break"><a class="viewcode-back" href="../../exvalua_doc_gen.html#exvalua_doc_gen.exvalua_doc_gen.TableGeneration.prevent_document_break">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">prevent_document_break</span><span class="p">(</span><span class="n">document</span><span class="p">:</span> <span class="n">Document</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Prevents line breaks on page change.</span>
+
+<span class="sd">        :param document: The Word document to modify.</span>
+<span class="sd">        :type document: Document</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">tags</span> <span class="o">=</span> <span class="n">document</span><span class="o">.</span><span class="n">element</span><span class="o">.</span><span class="n">xpath</span><span class="p">(</span><span class="s1">&#39;//w:tr&#39;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">tag</span> <span class="ow">in</span> <span class="n">tags</span><span class="p">:</span>
+            <span class="n">child</span> <span class="o">=</span> <span class="n">OxmlElement</span><span class="p">(</span><span class="s1">&#39;w:cantSplit&#39;</span><span class="p">)</span>
+            <span class="n">tag</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">child</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="TableGeneration.format_doc_report"><a class="viewcode-back" href="../../exvalua_doc_gen.html#exvalua_doc_gen.exvalua_doc_gen.TableGeneration.format_doc_report">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">format_doc_report</span><span class="p">(</span><span class="n">table</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Formats the table (font, alignments, cell background color, etc.).</span>
+
+<span class="sd">        :param table: The table to format.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">row_index</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">table</span><span class="o">.</span><span class="n">rows</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">cell_index</span><span class="p">,</span> <span class="n">cell</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">row</span><span class="o">.</span><span class="n">cells</span><span class="p">):</span>
+                <span class="k">for</span> <span class="n">paragraph</span> <span class="ow">in</span> <span class="n">cell</span><span class="o">.</span><span class="n">paragraphs</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">cell_index</span> <span class="o">==</span> <span class="mi">2</span> <span class="ow">or</span> <span class="n">row_index</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                        <span class="n">paragraph</span><span class="o">.</span><span class="n">alignment</span> <span class="o">=</span> <span class="n">WD_ALIGN_PARAGRAPH</span><span class="o">.</span><span class="n">CENTER</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">paragraph</span><span class="o">.</span><span class="n">alignment</span> <span class="o">=</span> <span class="n">WD_ALIGN_PARAGRAPH</span><span class="o">.</span><span class="n">LEFT</span>
+                    <span class="k">for</span> <span class="n">run</span> <span class="ow">in</span> <span class="n">paragraph</span><span class="o">.</span><span class="n">runs</span><span class="p">:</span>
+                        <span class="n">run</span><span class="o">.</span><span class="n">font</span><span class="o">.</span><span class="n">size</span> <span class="o">=</span> <span class="n">Pt</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>
+                        <span class="k">if</span> <span class="n">row_index</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                            <span class="n">run</span><span class="o">.</span><span class="n">bold</span> <span class="o">=</span> <span class="kc">True</span>
+                            <span class="n">run</span><span class="o">.</span><span class="n">font</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;Hellix&#39;</span>
+                            <span class="n">color</span> <span class="o">=</span> <span class="s2">&quot;#008AC9&quot;</span>
+                            <span class="n">cell</span><span class="o">.</span><span class="n">_element</span><span class="o">.</span><span class="n">get_or_add_tcPr</span><span class="p">()</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">parse_xml</span><span class="p">(</span>
+                                <span class="sa">r</span><span class="s1">&#39;&lt;w:shd </span><span class="si">{}</span><span class="s1"> w:fill=&quot;</span><span class="si">{}</span><span class="s1">&quot;/&gt;&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">nsdecls</span><span class="p">(</span><span class="s1">&#39;w&#39;</span><span class="p">),</span> <span class="n">color</span><span class="p">)))</span>
+                        <span class="k">else</span><span class="p">:</span>
+                            <span class="n">run</span><span class="o">.</span><span class="n">bold</span> <span class="o">=</span> <span class="kc">False</span>
+                            <span class="n">run</span><span class="o">.</span><span class="n">font</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;Hellix-Regular&#39;</span></div>
+
+<div class="viewcode-block" id="TableGeneration.adjust_col_width"><a class="viewcode-back" href="../../exvalua_doc_gen.html#exvalua_doc_gen.exvalua_doc_gen.TableGeneration.adjust_col_width">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">adjust_col_width</span><span class="p">(</span><span class="n">table</span><span class="p">,</span> <span class="n">col_idx</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">col_width</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Adjusts the width of a specified column in the table.</span>
+
+<span class="sd">        :param table: The table containing the column.</span>
+<span class="sd">        :param col_idx: The index of the column to adjust.</span>
+<span class="sd">        :param col_width: The new width for the column.</span>
+<span class="sd">        :type col_width: float</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">table</span><span class="o">.</span><span class="n">rows</span><span class="p">:</span>
+            <span class="n">row</span><span class="o">.</span><span class="n">cells</span><span class="p">[</span><span class="n">col_idx</span><span class="p">]</span><span class="o">.</span><span class="n">width</span> <span class="o">=</span> <span class="n">col_width</span></div>
+
+<div class="viewcode-block" id="TableGeneration.replace_header_image"><a class="viewcode-back" href="../../exvalua_doc_gen.html#exvalua_doc_gen.exvalua_doc_gen.TableGeneration.replace_header_image">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">replace_header_image</span><span class="p">(</span><span class="n">docx_file_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">image_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Replaces a specific image in a Word document with a new image.</span>
+
+<span class="sd">        :param docx_file_path: The path to the Word document.</span>
+<span class="sd">        :type docx_file_path: str</span>
+<span class="sd">        :param image_path: The path to the replacement image.</span>
+<span class="sd">        :type image_path: str</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">tpl</span> <span class="o">=</span> <span class="n">DocxTemplate</span><span class="p">(</span><span class="n">docx_file_path</span><span class="p">)</span>
+        <span class="n">tpl</span><span class="o">.</span><span class="n">replace_pic</span><span class="p">(</span><span class="s2">&quot;image28.jpg&quot;</span><span class="p">,</span> <span class="n">image_path</span><span class="p">)</span>
+        <span class="n">tpl</span><span class="o">.</span><span class="n">render</span><span class="p">({})</span>
+        <span class="n">tpl</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">docx_file_path</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="TableGeneration.generate_table"><a class="viewcode-back" href="../../exvalua_doc_gen.html#exvalua_doc_gen.exvalua_doc_gen.TableGeneration.generate_table">[docs]</a>    <span class="k">def</span> <span class="nf">generate_table</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">doc</span><span class="p">,</span> <span class="n">output_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">translation</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">save</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Generates a table from the formatted DataFrame and saves it to a Word document.</span>
+
+<span class="sd">        :param doc: The Word document to which the table will be added.</span>
+<span class="sd">        :param output_path: The output path for the generated document.</span>
+<span class="sd">        :type output_path: str</span>
+<span class="sd">        :param translation: Translation language. Set to &#39;no&#39; for no translation.</span>
+<span class="sd">        :type translation: str</span>
+<span class="sd">        :param save: True if the document should be saved, False otherwise.</span>
+<span class="sd">        :type save: bool</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">format_df_report</span><span class="p">()</span>
+        <span class="n">table</span> <span class="o">=</span> <span class="n">doc</span><span class="o">.</span><span class="n">add_table</span><span class="p">(</span><span class="n">rows</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">cols</span><span class="o">=</span><span class="n">df</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">style</span><span class="o">=</span><span class="s1">&#39;Table Grid&#39;</span><span class="p">)</span>
+        <span class="n">header</span> <span class="o">=</span> <span class="n">table</span><span class="o">.</span><span class="n">rows</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">cells</span>
+        <span class="k">for</span> <span class="n">j</span><span class="p">,</span> <span class="n">column</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="p">):</span>
+            <span class="n">header</span><span class="p">[</span><span class="n">j</span><span class="p">]</span><span class="o">.</span><span class="n">text</span> <span class="o">=</span> <span class="n">column</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">cell</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">header</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="mi">5</span><span class="p">:</span>
+                <span class="n">cell</span><span class="o">.</span><span class="n">vertical_alignment</span> <span class="o">=</span> <span class="n">WD_ALIGN_VERTICAL</span><span class="o">.</span><span class="n">CENTER</span>
+            <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="mi">4</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">paragraph</span> <span class="ow">in</span> <span class="n">cell</span><span class="o">.</span><span class="n">paragraphs</span><span class="p">:</span>
+                    <span class="n">paragraph</span><span class="o">.</span><span class="n">alignment</span> <span class="o">=</span> <span class="n">WD_ALIGN_PARAGRAPH</span><span class="o">.</span><span class="n">LEFT</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">paragraph</span> <span class="ow">in</span> <span class="n">cell</span><span class="o">.</span><span class="n">paragraphs</span><span class="p">:</span>
+                    <span class="n">paragraph</span><span class="o">.</span><span class="n">alignment</span> <span class="o">=</span> <span class="n">WD_ALIGN_PARAGRAPH</span><span class="o">.</span><span class="n">CENTER</span>
+        <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">iterrows</span><span class="p">():</span>
+            <span class="n">cells</span> <span class="o">=</span> <span class="n">table</span><span class="o">.</span><span class="n">add_row</span><span class="p">()</span><span class="o">.</span><span class="n">cells</span>
+            <span class="k">for</span> <span class="n">cell</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">cells</span><span class="p">,</span> <span class="n">row</span><span class="p">):</span>
+                <span class="k">if</span> <span class="nb">str</span><span class="p">(</span><span class="n">value</span><span class="p">)</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;.png&#39;</span><span class="p">):</span>
+                    <span class="n">paragraph</span> <span class="o">=</span> <span class="n">cell</span><span class="o">.</span><span class="n">paragraphs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                    <span class="n">paragraph</span><span class="o">.</span><span class="n">alignment</span> <span class="o">=</span> <span class="n">WD_ALIGN_PARAGRAPH</span><span class="o">.</span><span class="n">CENTER</span>
+                    <span class="n">run</span> <span class="o">=</span> <span class="n">paragraph</span><span class="o">.</span><span class="n">add_run</span><span class="p">()</span>
+                    <span class="n">run</span><span class="o">.</span><span class="n">add_picture</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="n">Inches</span><span class="p">(</span><span class="mf">1.8</span><span class="p">))</span>
+                    <span class="n">cell</span><span class="o">.</span><span class="n">vertical_alignment</span> <span class="o">=</span> <span class="n">WD_ALIGN_VERTICAL</span><span class="o">.</span><span class="n">CENTER</span>
+                <span class="k">elif</span> <span class="nb">str</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">==</span> <span class="s1">&#39;nan&#39;</span><span class="p">:</span>
+                    <span class="n">cell</span><span class="o">.</span><span class="n">text</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">cell</span><span class="o">.</span><span class="n">text</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">adjust_col_width</span><span class="p">(</span><span class="n">table</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="n">Inches</span><span class="p">(</span><span class="mi">3</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">adjust_col_width</span><span class="p">(</span><span class="n">table</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">Inches</span><span class="p">(</span><span class="mi">2</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">adjust_col_width</span><span class="p">(</span><span class="n">table</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">Inches</span><span class="p">(</span><span class="mi">3</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_repeat_table_header</span><span class="p">(</span><span class="n">table</span><span class="o">.</span><span class="n">rows</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">format_doc_report</span><span class="p">(</span><span class="n">table</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">prevent_document_break</span><span class="p">(</span><span class="n">doc</span><span class="p">)</span>
+        <span class="n">paragraph</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">find_paragraph_precede_rectable</span><span class="p">(</span><span class="n">doc</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">move_table_after</span><span class="p">(</span><span class="n">table</span><span class="p">,</span> <span class="n">paragraph</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">translation</span> <span class="o">!=</span> <span class="s1">&#39;no&#39;</span><span class="p">:</span>
+            <span class="n">doc_translation</span> <span class="o">=</span> <span class="n">DocumentTranslation</span><span class="p">(</span><span class="n">doc</span><span class="p">,</span> <span class="s1">&#39;fr&#39;</span><span class="p">,</span> <span class="n">translation</span><span class="p">)</span>
+            <span class="n">doc_translation</span><span class="o">.</span><span class="n">traduction_report</span><span class="p">(</span><span class="n">output_path</span><span class="p">,</span> <span class="n">save</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">save</span><span class="p">:</span>
+            <span class="n">doc</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">output_path</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">table</span></div></div>
+
+
+<div class="viewcode-block" id="DocumentGeneration"><a class="viewcode-back" href="../../exvalua_doc_gen.html#exvalua_doc_gen.exvalua_doc_gen.DocumentGeneration">[docs]</a><span class="k">class</span> <span class="nc">DocumentGeneration</span><span class="p">:</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">template_doc_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">replace_dic_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initializes the DocumentGeneration class with the path to a template document and a replacement dictionary.</span>
+
+<span class="sd">        :param template_doc_path: The path to the template document.</span>
+<span class="sd">        :type template_doc_path: str</span>
+<span class="sd">        :param replace_dic_path: The path to the replacement dictionary.</span>
+<span class="sd">        :type replace_dic_path: str</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_template_doc_path</span> <span class="o">=</span> <span class="n">template_doc_path</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_replace_dic_path</span> <span class="o">=</span> <span class="n">replace_dic_path</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">template_doc_path</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Gets the path to the template document.</span>
+
+<span class="sd">        :return: The path to the template document.</span>
+<span class="sd">        :rtype: str</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_template_doc_path</span>
+
+    <span class="nd">@template_doc_path</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">template_doc_path</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Sets the path to the template document.</span>
+
+<span class="sd">        :param value: The new path to the template document.</span>
+<span class="sd">        :type value: str</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_template_doc_path</span> <span class="o">=</span> <span class="n">value</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">replace_dic_path</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Gets the path to the replacement dictionary.</span>
+
+<span class="sd">        :return: The path to the replacement dictionary.</span>
+<span class="sd">        :rtype: str</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_replace_dic_path</span>
+
+    <span class="nd">@replace_dic_path</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">replace_dic_path</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Sets the path to the replacement dictionary.</span>
+
+<span class="sd">        :param value: The new path to the replacement dictionary.</span>
+<span class="sd">        :type value: str</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_replace_dic_path</span> <span class="o">=</span> <span class="n">value</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">freq_grav</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Gets the frequency and gravity from the Excel form.</span>
+
+<span class="sd">        :return: A tuple containing the frequency and gravity values.</span>
+<span class="sd">        :rtype: tuple</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_excel</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">replace_dic_path</span><span class="p">)</span>
+        <span class="n">freq</span><span class="p">,</span> <span class="n">grav</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;Champ&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">isin</span><span class="p">([</span><span class="s1">&#39;Fréquence&#39;</span><span class="p">,</span> <span class="s1">&#39;Gravité&#39;</span><span class="p">])][</span><span class="s1">&#39;Valeur du champ&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">freq</span><span class="p">,</span> <span class="n">grav</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">dic</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Creates a replacement dictionary from the Excel form to pass to the replace package.</span>
+
+<span class="sd">        :return: A dictionary with replacement values.</span>
+<span class="sd">        :rtype: dict</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_excel</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">replace_dic_path</span><span class="p">)</span>
+        <span class="n">my_dic</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
+            <span class="n">df</span><span class="p">[[</span><span class="s1">&#39;Code du champ&#39;</span><span class="p">,</span> <span class="s1">&#39;Valeur du champ&#39;</span><span class="p">]]</span><span class="o">.</span><span class="n">dropna</span><span class="p">(</span><span class="n">subset</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;Valeur du champ&#39;</span><span class="p">,</span> <span class="s1">&#39;Code du champ&#39;</span><span class="p">])</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">my_dic</span>
+
+<div class="viewcode-block" id="DocumentGeneration.copy_cell_properties"><a class="viewcode-back" href="../../exvalua_doc_gen.html#exvalua_doc_gen.exvalua_doc_gen.DocumentGeneration.copy_cell_properties">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">copy_cell_properties</span><span class="p">(</span><span class="n">source_cell</span><span class="p">,</span> <span class="n">dest_cell</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Copies cell properties from a source cell to a destination cell.</span>
+
+<span class="sd">        Copies cell background shading, borders, etc., in a python-docx Document.</span>
+
+<span class="sd">        :param source_cell: The source cell with desired formatting.</span>
+<span class="sd">        :type source_cell: docx.table._Cell</span>
+<span class="sd">        :param dest_cell: The destination cell to which to apply formatting.</span>
+<span class="sd">        :type dest_cell: docx.table._Cell</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Get properties from source cell</span>
+        <span class="c1"># (tcPr = table cell properties)</span>
+        <span class="n">cell_properties</span> <span class="o">=</span> <span class="n">source_cell</span><span class="o">.</span><span class="n">_tc</span><span class="o">.</span><span class="n">get_or_add_tcPr</span><span class="p">()</span>
+
+        <span class="c1"># Remove any table cell properties from destination cell</span>
+        <span class="c1"># (otherwise, we end up with two &lt;w:tcPr&gt; ... &lt;/w:tcPr&gt; blocks)</span>
+        <span class="n">dest_cell</span><span class="o">.</span><span class="n">_tc</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">dest_cell</span><span class="o">.</span><span class="n">_tc</span><span class="o">.</span><span class="n">get_or_add_tcPr</span><span class="p">())</span>
+
+        <span class="c1"># Make a shallow copy of the source cell properties</span>
+        <span class="c1"># (otherwise, properties get *moved* from source to destination)</span>
+        <span class="n">cell_properties</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">cell_properties</span><span class="p">)</span>
+
+        <span class="c1"># Append the copy of properties from the source cell to the destination cell</span>
+        <span class="n">dest_cell</span><span class="o">.</span><span class="n">_tc</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">cell_properties</span><span class="p">)</span></div>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">table_length</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns the table length of the visitor table.</span>
+
+<span class="sd">        :return: The length of the visitor table.</span>
+<span class="sd">        :rtype: int</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_excel</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">replace_dic_path</span><span class="p">)</span>
+        <span class="n">table_length</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;Code du champ&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;nom_visiteur&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">iat</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">4</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">table_length</span>
+
+<div class="viewcode-block" id="DocumentGeneration.change_people_table"><a class="viewcode-back" href="../../exvalua_doc_gen.html#exvalua_doc_gen.exvalua_doc_gen.DocumentGeneration.change_people_table">[docs]</a>    <span class="k">def</span> <span class="nf">change_people_table</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Modifies the provided table by duplicating rows and updating cell content based on specific conditions.</span>
+
+<span class="sd">        :param table: A table object that supports adding rows and accessing cells through rows.</span>
+<span class="sd">        :type table: Table</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">l</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">table_length</span>
+        <span class="k">if</span> <span class="n">l</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">l</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+                <span class="n">table</span><span class="o">.</span><span class="n">add_row</span><span class="p">()</span>
+                <span class="n">new_row</span> <span class="o">=</span> <span class="n">table</span><span class="o">.</span><span class="n">rows</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+                <span class="n">old_row</span> <span class="o">=</span> <span class="n">table</span><span class="o">.</span><span class="n">rows</span><span class="p">[</span><span class="n">i</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span>
+                <span class="k">for</span> <span class="n">old_cell</span><span class="p">,</span> <span class="n">new_cell</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">old_row</span><span class="o">.</span><span class="n">cells</span><span class="p">,</span> <span class="n">new_row</span><span class="o">.</span><span class="n">cells</span><span class="p">):</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">copy_cell_properties</span><span class="p">(</span><span class="n">old_cell</span><span class="p">,</span> <span class="n">new_cell</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="s1">&#39;ate&#39;</span> <span class="ow">in</span> <span class="p">(</span><span class="n">old_cell</span><span class="o">.</span><span class="n">text</span><span class="p">)</span> <span class="ow">or</span> <span class="s1">&#39;ITE&#39;</span> <span class="ow">in</span> <span class="p">(</span><span class="n">old_cell</span><span class="o">.</span><span class="n">text</span><span class="p">):</span>
+                        <span class="n">new_cell</span><span class="o">.</span><span class="n">text</span> <span class="o">=</span> <span class="n">old_cell</span><span class="o">.</span><span class="n">text</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">new_cell</span><span class="o">.</span><span class="n">text</span> <span class="o">=</span> <span class="n">old_cell</span><span class="o">.</span><span class="n">text</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="nb">int</span><span class="p">(</span><span class="n">old_cell</span><span class="o">.</span><span class="n">text</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">])</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s1">&#39;</span> <span class="o">+</span> <span class="s1">&#39;}&#39;</span></div>
+
+<div class="viewcode-block" id="DocumentGeneration.change_risk_matrix"><a class="viewcode-back" href="../../exvalua_doc_gen.html#exvalua_doc_gen.exvalua_doc_gen.DocumentGeneration.change_risk_matrix">[docs]</a>    <span class="k">def</span> <span class="nf">change_risk_matrix</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">doc</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Updates the risk matrix table in the given Word document based on frequency and gravity values.</span>
+
+<span class="sd">        :param doc: A `docx.Document` object representing the Word document containing the table.</span>
+<span class="sd">        :type doc: Document</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">freq</span><span class="p">,</span> <span class="n">grav</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">freq_grav</span>
+        <span class="n">table</span> <span class="o">=</span> <span class="n">doc</span><span class="o">.</span><span class="n">tables</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">table</span><span class="o">.</span><span class="n">cell</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">freq</span> <span class="o">-</span> <span class="mi">4</span><span class="p">),</span> <span class="n">grav</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">text</span> <span class="o">=</span> <span class="s2">&quot;$</span><span class="si">{NOM_SITE}</span><span class="s2">&quot;</span>
+        <span class="n">table</span><span class="o">.</span><span class="n">cell</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">freq</span> <span class="o">-</span> <span class="mi">4</span><span class="p">),</span> <span class="n">grav</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">paragraphs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">alignment</span> <span class="o">=</span> <span class="n">WD_PARAGRAPH_ALIGNMENT</span><span class="o">.</span><span class="n">CENTER</span></div>
+
+<div class="viewcode-block" id="DocumentGeneration.mastery_level"><a class="viewcode-back" href="../../exvalua_doc_gen.html#exvalua_doc_gen.exvalua_doc_gen.DocumentGeneration.mastery_level">[docs]</a>    <span class="k">def</span> <span class="nf">mastery_level</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Determines the mastery level based on the frequency and gravity values.</span>
+
+<span class="sd">        :return: The mastery level as a string.</span>
+<span class="sd">        :rtype: str</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">freq</span><span class="p">,</span> <span class="n">grav</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">freq_grav</span>
+        <span class="k">if</span> <span class="n">freq</span> <span class="o">==</span> <span class="n">grav</span> <span class="o">==</span> <span class="mi">4</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s2">&quot;Maîtrise médiocre&quot;</span>
+        <span class="k">elif</span> <span class="mi">2</span> <span class="o">&lt;=</span> <span class="n">freq</span> <span class="o">&lt;=</span> <span class="mi">3</span> <span class="ow">and</span> <span class="n">grav</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s2">&quot;Maîtrise faible&quot;</span>
+        <span class="k">elif</span> <span class="mi">2</span> <span class="o">&lt;=</span> <span class="n">freq</span> <span class="o">&lt;=</span> <span class="mi">3</span> <span class="ow">and</span> <span class="n">grav</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s2">&quot;Maîtrise moyenne&quot;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s2">&quot;Maîtrisé&quot;</span></div>
+
+<div class="viewcode-block" id="DocumentGeneration.change_eval_risk_table"><a class="viewcode-back" href="../../exvalua_doc_gen.html#exvalua_doc_gen.exvalua_doc_gen.DocumentGeneration.change_eval_risk_table">[docs]</a>    <span class="k">def</span> <span class="nf">change_eval_risk_table</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Updates the evaluation risk table in the given Word document based on the mastery level.</span>
+
+<span class="sd">        The function updates the second table in the document. It places the placeholder `${nom_site}`</span>
+<span class="sd">        in the cell corresponding to the mastery level and aligns the text to the center.</span>
+
+<span class="sd">        :param table: A table object representing the evaluation risk table.</span>
+<span class="sd">        :type table: Table</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">mastery_level</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;Maîtrisé&quot;</span><span class="p">:</span>
+            <span class="n">table</span><span class="o">.</span><span class="n">cell</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">text</span> <span class="o">=</span> <span class="s2">&quot;$</span><span class="si">{NOM_SITE}</span><span class="s2">&quot;</span>
+            <span class="n">table</span><span class="o">.</span><span class="n">cell</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">paragraphs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">alignment</span> <span class="o">=</span> <span class="n">WD_PARAGRAPH_ALIGNMENT</span><span class="o">.</span><span class="n">CENTER</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">mastery_level</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;Maîtrise moyenne&quot;</span><span class="p">:</span>
+            <span class="n">table</span><span class="o">.</span><span class="n">cell</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span><span class="o">.</span><span class="n">text</span> <span class="o">=</span> <span class="s2">&quot;$</span><span class="si">{NOM_SITE}</span><span class="s2">&quot;</span>
+            <span class="n">table</span><span class="o">.</span><span class="n">cell</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span><span class="o">.</span><span class="n">paragraphs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">alignment</span> <span class="o">=</span> <span class="n">WD_PARAGRAPH_ALIGNMENT</span><span class="o">.</span><span class="n">CENTER</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">mastery_level</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;Maîtrise faible&quot;</span><span class="p">:</span>
+            <span class="n">table</span><span class="o">.</span><span class="n">cell</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span><span class="o">.</span><span class="n">text</span> <span class="o">=</span> <span class="s2">&quot;$</span><span class="si">{NOM_SITE}</span><span class="s2">&quot;</span>
+            <span class="n">table</span><span class="o">.</span><span class="n">cell</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span><span class="o">.</span><span class="n">paragraphs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">alignment</span> <span class="o">=</span> <span class="n">WD_PARAGRAPH_ALIGNMENT</span><span class="o">.</span><span class="n">CENTER</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">mastery_level</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;Maîtrise médiocre&quot;</span><span class="p">:</span>
+            <span class="n">table</span><span class="o">.</span><span class="n">cell</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">7</span><span class="p">)</span><span class="o">.</span><span class="n">text</span> <span class="o">=</span> <span class="s2">&quot;$</span><span class="si">{NOM_SITE}</span><span class="s2">&quot;</span>
+            <span class="n">table</span><span class="o">.</span><span class="n">cell</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">7</span><span class="p">)</span><span class="o">.</span><span class="n">paragraphs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">alignment</span> <span class="o">=</span> <span class="n">WD_PARAGRAPH_ALIGNMENT</span><span class="o">.</span><span class="n">CENTER</span></div>
+
+<div class="viewcode-block" id="DocumentGeneration.update_eval_risk_tables"><a class="viewcode-back" href="../../exvalua_doc_gen.html#exvalua_doc_gen.exvalua_doc_gen.DocumentGeneration.update_eval_risk_tables">[docs]</a>    <span class="k">def</span> <span class="nf">update_eval_risk_tables</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">doc</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Updates multiple evaluation risk tables in the Word document.</span>
+
+<span class="sd">        :param doc: A `docx.Document` object representing the Word document containing the tables.</span>
+<span class="sd">        :type doc: Document</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">table_index</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">4</span><span class="p">):</span>
+            <span class="n">table</span> <span class="o">=</span> <span class="n">doc</span><span class="o">.</span><span class="n">tables</span><span class="p">[</span><span class="n">table_index</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">change_eval_risk_table</span><span class="p">(</span><span class="n">table</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="DocumentGeneration.update_people_table"><a class="viewcode-back" href="../../exvalua_doc_gen.html#exvalua_doc_gen.exvalua_doc_gen.DocumentGeneration.update_people_table">[docs]</a>    <span class="k">def</span> <span class="nf">update_people_table</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">doc</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Updates the visitor table.</span>
+
+<span class="sd">        :param doc: A `docx.Document` object representing the Word document containing the tables.</span>
+<span class="sd">        :type doc: Document</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">table</span> <span class="o">=</span> <span class="n">doc</span><span class="o">.</span><span class="n">tables</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">change_people_table</span><span class="p">(</span><span class="n">table</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="DocumentGeneration.final_generation"><a class="viewcode-back" href="../../exvalua_doc_gen.html#exvalua_doc_gen.exvalua_doc_gen.DocumentGeneration.final_generation">[docs]</a>    <span class="k">def</span> <span class="nf">final_generation</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Replaces placeholders in the template document with values from the replacement dictionary.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">doc</span> <span class="o">=</span> <span class="n">Document</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">template_doc_path</span><span class="p">)</span>  <span class="c1"># Load the template document</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">update_people_table</span><span class="p">(</span><span class="n">doc</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">update_eval_risk_tables</span><span class="p">(</span><span class="n">doc</span><span class="p">)</span>
+        <span class="n">my_dic</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dic</span>  <span class="c1"># Create a replacement dictionary</span>
+        <span class="n">docx_replace</span><span class="p">(</span><span class="n">doc</span><span class="p">,</span> <span class="o">**</span><span class="n">my_dic</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">doc</span>  <span class="c1"># Replace placeholders in the document</span></div></div>
+
+
+<span class="nd">@Gooey</span><span class="p">(</span><span class="n">program_name</span><span class="o">=</span><span class="s1">&#39;Exvalua GenRep&#39;</span><span class="p">,</span>
+       <span class="n">program_description</span><span class="o">=</span><span class="s1">&#39;Generate a Word report from an Excel file&#39;</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Main function to execute the GUI for generating reports.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">parser</span> <span class="o">=</span> <span class="n">GooeyParser</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s1">&#39;GenRep GUI&#39;</span><span class="p">)</span>  <span class="c1"># Initialize the argument parser with GUI options</span>
+    <span class="n">input_group</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">add_argument_group</span><span class="p">(</span>
+        <span class="s2">&quot;Input files&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;Choose the input files&quot;</span>
+    <span class="p">)</span>
+    <span class="n">input_group</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--excel_filepath&#39;</span><span class="p">,</span>
+                             <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Source Excel file&#39;</span><span class="p">,</span>  <span class="c1"># Help text for Excel file input</span>
+                             <span class="n">widget</span><span class="o">=</span><span class="s1">&#39;FileChooser&#39;</span><span class="p">,</span>  <span class="c1"># Use a file chooser widget</span>
+                             <span class="n">metavar</span><span class="o">=</span><span class="s1">&#39;Excel filepath&#39;</span><span class="p">,</span>
+                             <span class="n">gooey_options</span><span class="o">=</span><span class="p">{</span>
+                                 <span class="s1">&#39;wildcard&#39;</span><span class="p">:</span>
+                                     <span class="s2">&quot;Fichiers Excel (*.xlsx)|*.xlsx&quot;</span><span class="p">,</span>  <span class="c1"># Filter for Excel files</span>
+                                 <span class="s1">&#39;default_dir&#39;</span><span class="p">:</span> <span class="s2">&quot;c:/users&quot;</span><span class="p">,</span>  <span class="c1"># Default directory for file chooser</span>
+                                 <span class="s1">&#39;message&#39;</span><span class="p">:</span> <span class="s2">&quot;Pick a file&quot;</span>  <span class="c1"># Message for the file chooser</span>
+                             <span class="p">}</span>
+                             <span class="p">)</span>
+    <span class="n">input_group</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;-t&#39;</span><span class="p">,</span>
+                             <span class="s1">&#39;--template_filepath&#39;</span><span class="p">,</span>
+                             <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Source Word template file&#39;</span><span class="p">,</span>  <span class="c1"># Help text for template file input</span>
+                             <span class="n">widget</span><span class="o">=</span><span class="s1">&#39;FileChooser&#39;</span><span class="p">,</span>  <span class="c1"># Use a file chooser widget</span>
+                             <span class="n">metavar</span><span class="o">=</span><span class="s1">&#39;Excel filepath&#39;</span><span class="p">,</span>
+                             <span class="n">gooey_options</span><span class="o">=</span><span class="p">{</span>
+                                 <span class="s1">&#39;wildcard&#39;</span><span class="p">:</span>
+                                     <span class="s2">&quot;Fichiers Word (*.docx)|*.docx&quot;</span><span class="p">,</span>  <span class="c1"># Filter for Word files</span>
+                                 <span class="s1">&#39;default_dir&#39;</span><span class="p">:</span> <span class="s2">&quot;c:/users&quot;</span><span class="p">,</span>  <span class="c1"># Default directory for file chooser</span>
+                                 <span class="s1">&#39;message&#39;</span><span class="p">:</span> <span class="s2">&quot;Pick a file&quot;</span>  <span class="c1"># Message for the file chooser</span>
+                             <span class="p">}</span>
+                             <span class="p">)</span>
+    <span class="n">input_group</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--form_filepath&#39;</span><span class="p">,</span>
+                             <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Form Excel file&#39;</span><span class="p">,</span>  <span class="c1"># Help text for Excel file input</span>
+                             <span class="n">widget</span><span class="o">=</span><span class="s1">&#39;FileChooser&#39;</span><span class="p">,</span>  <span class="c1"># Use a file chooser widget</span>
+                             <span class="n">metavar</span><span class="o">=</span><span class="s1">&#39;Excel filepath&#39;</span><span class="p">,</span>
+                             <span class="n">gooey_options</span><span class="o">=</span><span class="p">{</span>
+                                 <span class="s1">&#39;wildcard&#39;</span><span class="p">:</span>
+                                     <span class="s2">&quot;Fichiers Excel (*.xlsx)|*.xlsx | (*.xlsm) | *.xlsm&quot;</span><span class="p">,</span>  <span class="c1"># Filter for Excel files</span>
+                                 <span class="s1">&#39;default_dir&#39;</span><span class="p">:</span> <span class="s2">&quot;c:/users&quot;</span><span class="p">,</span>  <span class="c1"># Default directory for file chooser</span>
+                                 <span class="s1">&#39;message&#39;</span><span class="p">:</span> <span class="s2">&quot;Pick a file&quot;</span>  <span class="c1"># Message for the file chooser</span>
+                             <span class="p">}</span>
+                             <span class="p">)</span>
+    <span class="n">output_group</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">add_argument_group</span><span class="p">(</span>
+        <span class="s2">&quot;Output options&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;Choose the output options&quot;</span>
+    <span class="p">)</span>
+    <span class="n">output_group</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;-o&#39;</span><span class="p">,</span>
+                              <span class="s1">&#39;--output_filepath&#39;</span><span class="p">,</span>
+                              <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Name of the file where you</span><span class="se">\&#39;</span><span class="s1">ll store the output&#39;</span><span class="p">,</span>  <span class="c1"># Help text for output file input</span>
+                              <span class="n">widget</span><span class="o">=</span><span class="s1">&#39;FileSaver&#39;</span><span class="p">,</span>  <span class="c1"># Use a file saver widget</span>
+                              <span class="n">metavar</span><span class="o">=</span><span class="s1">&#39;Output filepath&#39;</span><span class="p">,</span>
+                              <span class="n">gooey_options</span><span class="o">=</span><span class="p">{</span>
+                                  <span class="s1">&#39;message&#39;</span><span class="p">:</span> <span class="s1">&#39;Pick folder&#39;</span><span class="p">,</span>  <span class="c1"># Message for the file saver</span>
+                                  <span class="s1">&#39;default_dir&#39;</span><span class="p">:</span> <span class="s1">&#39;c:/users&#39;</span><span class="p">,</span>  <span class="c1"># Default directory for file saver</span>
+                                  <span class="s1">&#39;default_file&#39;</span><span class="p">:</span> <span class="s1">&#39;report.docx&#39;</span><span class="p">,</span>  <span class="c1"># Default file name</span>
+                                  <span class="s1">&#39;wildcard&#39;</span><span class="p">:</span>
+                                      <span class="s2">&quot;Fichiers Word (*.docx)|*.docx&quot;</span>  <span class="c1"># Filter for Word files</span>
+                              <span class="p">})</span>
+    <span class="n">output_group</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s1">&#39;--translation&#39;</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Choose translation language&#39;</span><span class="p">,</span>  <span class="c1"># Help text for Portuguese translation option</span>
+        <span class="n">widget</span><span class="o">=</span><span class="s1">&#39;Dropdown&#39;</span><span class="p">,</span>  <span class="c1"># Use a checkbox widget</span>
+        <span class="n">metavar</span><span class="o">=</span><span class="s1">&#39;Translation&#39;</span><span class="p">,</span>
+        <span class="n">choices</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;no&#39;</span><span class="p">,</span> <span class="s1">&#39;en&#39;</span><span class="p">,</span> <span class="s1">&#39;pt&#39;</span><span class="p">],</span>
+        <span class="n">default</span><span class="o">=</span><span class="s1">&#39;no&#39;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">args</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">()</span>  <span class="c1"># Parse the command line arguments</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Generating report.... </span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>  <span class="c1"># Print status message</span>
+    <span class="n">doc_gene</span> <span class="o">=</span> <span class="n">DocumentGeneration</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">template_filepath</span><span class="p">,</span>
+                                  <span class="n">args</span><span class="o">.</span><span class="n">form_filepath</span><span class="p">)</span>
+    <span class="n">doc</span> <span class="o">=</span> <span class="n">doc_gene</span><span class="o">.</span><span class="n">final_generation</span><span class="p">()</span>
+    <span class="n">report_gene</span> <span class="o">=</span> <span class="n">TableGeneration</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">excel_filepath</span><span class="p">)</span>  <span class="c1"># Initialize TableGeneration with input files</span>
+    <span class="n">report_gene</span><span class="o">.</span><span class="n">generate_table</span><span class="p">(</span><span class="n">doc</span><span class="p">,</span>
+                               <span class="n">args</span><span class="o">.</span><span class="n">output_filepath</span><span class="p">,</span>
+                               <span class="n">args</span><span class="o">.</span><span class="n">translation</span><span class="p">)</span>  <span class="c1"># Generate the table and save the document</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Generation done!&#39;</span><span class="p">)</span>  <span class="c1"># Print completion message</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Virgile PAILLET.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
